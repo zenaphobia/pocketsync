@@ -1,0 +1,24 @@
+{
+  "name": "pocketsync",
+  "version": "0.0.1",
+  "description": "Synchronize your data in real-time between your frontend and your pocketbase instances.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pocketbase",
+    "api",
+    "synchronize",
+    "real-time"
+  ],
+  "author": "zenaphobia",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.11",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "pocketbase": "^0.21.3"
+  }
+}
