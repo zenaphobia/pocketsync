@@ -18,7 +18,7 @@ const collectionName = 'your-collection-name';
 const collection = new PocketSync<Dog>(pocketbaseURL, collectionName);
 ```
 
-2. List your records with `list()`, if using svelte, you can use auto subscribers.
+2. List your records with `list()`, if using svelte, you can use auto subscribers. The store returns an object with two properties: `{ loading: boolean, items: PocketSyncRecord<T>[] }`
 
 ```
 <script lang="ts">
@@ -32,7 +32,7 @@ const collection = new PocketSync<Dog>(pocketbaseURL, collectionName);
     let fileStore = collection.list();
 </script>
 
-{#each $fileStore as file}
+{#each $fileStore.items as file}
     <span>{file.record.name}</span>
 {/each}
 ```
@@ -69,7 +69,7 @@ const collectionName = 'your-collection-name';
 const collection = new PocketSync<Dog>(pocketbaseURL, collectionName);
 const fileStore = collection.list();
 
-$: singleFile = $fileStore[0];
+$: singleFile = $fileStore.items[0];
 
 singleFile.delete();
 
