@@ -1,8 +1,8 @@
-#PocketSync
+# PocketSync
 
 PocketSync is a TypeScript library that integrates with Pocketbase to provide real-time updates using the realtime API. It simplifies database connections for your frontend and supports CRUD operations.
 
-##Basic Usage
+## Basic Usage
 
 1. Initialize a PocketSync Collection.
 
@@ -37,7 +37,7 @@ const collection = new PocketSync<Dog>(pocketbaseURL, collectionName);
 {/each}
 ```
 
-##CRUD Operations
+## CRUD Operations
 
 1. Adding a record.
 
