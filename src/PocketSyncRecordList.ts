@@ -5,26 +5,29 @@ import { PocketSyncRecord } from "./PocketSyncRecord";
 export class PocketSyncRecordList<T extends RecordModel> {
     #pb: Pocketbase;
     private cache: Map<string, PocketSyncRecord<T>> = new Map();
-    private store: PocketSyncRecord<T>[] = [];
-    private subscribers: Array<(value: PocketSyncRecord<T>[]) => void> = [];
+    private store: { loading: boolean, items: PocketSyncRecord<T>[] };
+    private subscribers: Array<(value: { loading: boolean, items: PocketSyncRecord<T>[] }) => void> = [];
     private collectionName: string;
 
     constructor(pb: Pocketbase, collection: string) {
         this.#pb = pb;
-        this.store = [];
+        this.store = { loading: false, items: [] };
         this.collectionName = collection;
         this.initSubscription(collection);
         this.initCache(collection);
     }
 
-    private updateItems(event: any) {
+    private updateStore(event: any) {
+        this.store.loading = true;
+        this.notifySubscribers();
         if (event.action === 'delete') {
             this.cache.delete(event.record.id);
         } else {
             const _newRecord = new PocketSyncRecord(event.record, this.#pb, this.collectionName)
             this.cache.set(event.record.id, _newRecord);
         }
-        this.store = [...this.cache.values()];
+        this.store.items = [...this.cache.values()];
+        this.store.loading = false;
         this.notifySubscribers();
     }
 
@@ -34,7 +37,8 @@ export class PocketSyncRecordList<T extends RecordModel> {
             const _record = new PocketSyncRecord<T>(record, this.#pb, this.collectionName)
             this.cache.set(record.id, _record);
         });
-        this.store = [...this.cache.values()];
+        this.store.items = [...this.cache.values()];
+        this.store.loading = false;
         this.notifySubscribers();
     }
 
@@ -42,7 +46,7 @@ export class PocketSyncRecordList<T extends RecordModel> {
         if (!this.#pb) {
             throw new Error("db was not initialized");
         }
-        this.#pb.collection(collection).subscribe('*', (event) => this.updateItems(event));
+        this.#pb.collection(collection).subscribe('*', (event) => this.updateStore(event));
         console.log("Subscription initialized");
     }
 
@@ -55,7 +59,6 @@ export class PocketSyncRecordList<T extends RecordModel> {
         const formData = new FormData();
 
         for (const [key, value] of Object.entries(recordData)) {
-            console.log(`${key}: ${value}`)
             formData.append(key, value as string);
         }
 
@@ -68,13 +71,42 @@ export class PocketSyncRecordList<T extends RecordModel> {
         }
     }
 
-    public subscribe(callback: (store: PocketSyncRecord<T>[]) => void) {
+    public async deleteRecord(item: string | PocketSyncRecord<T>) {
+        if (!item) {
+            throw new Error("Record ID or PocketSyncRecord item required");
+        }
+
+        const id = item instanceof PocketSyncRecord ? item.id : item;
+
+        try {
+            this.#pb.collection(this.collectionName).delete(id);
+        } catch (error) {
+            console.error(error);
+            throw new Error("Error deleting record");
+        }
+    }
+
+    public async updateRecord(options: { item: string | PocketSyncRecord<T>, updatedKeys: Partial<T> }) {
+        if (!options) {
+            throw new Error("Options parameter required");
+        }
+
+        const item = options.item instanceof PocketSyncRecord ? options.item.id : options.item;
+
+        try {
+            await this.#pb.collection(this.collectionName).update<T>(item, options.updatedKeys);
+        } catch (error) {
+            console.error("Error updating item: ", error);
+        }
+    }
+
+    public subscribe(callback: (store: { loading: boolean, items: PocketSyncRecord<T>[] }) => void) {
         this.subscribers.push(callback);
         callback(this.store);
         return () => this.unsubscribe(callback);
     }
 
-    public unsubscribe(callback: (store: PocketSyncRecord<T>[]) => void) {
+    public unsubscribe(callback: (store: { loading: boolean, items: PocketSyncRecord<T>[] }) => void) {
         this.subscribers = this.subscribers.filter(sub => sub !== callback);
     }
 
