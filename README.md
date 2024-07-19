@@ -18,7 +18,7 @@ const collectionName = 'your-collection-name';
 const collection = new PocketSync<Dog>(pocketbaseURL, collectionName);
 ```
 
-2. List your records with `list(),` if using svelte, you can use auto subscribers.
+2. List your records with `list()`, if using svelte, you can use auto subscribers.
 
 ```
 <script lang="ts">
