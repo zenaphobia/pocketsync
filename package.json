@@ -1,6 +1,6 @@
 {
-  "name": "@zenaphobia/pocketsync",
-  "version": "0.0.1",
+  "name": "pocketsync",
+  "version": "0.0.11",
   "description": "Synchronize your data in real-time between your frontend and your pocketbase instances.",
   "main": "index.js",
   "scripts": {
