@@ -1,5 +1,5 @@
 {
-  "name": "pocketsync",
+  "name": "@zenaphobia/pocketsync",
   "version": "0.0.1",
   "description": "Synchronize your data in real-time between your frontend and your pocketbase instances.",
   "main": "index.js",
@@ -20,5 +20,13 @@
   },
   "dependencies": {
     "pocketbase": "^0.21.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenaphobia/pocketsync.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zenaphobia/pocketsync/issues"
+  },
+  "homepage": "https://github.com/zenaphobia/pocketsync#readme"
 }
