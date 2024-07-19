@@ -33,7 +33,7 @@ const collection = new PocketSync<Dog>(pocketbaseURL, collectionName);
 </script>
 
 {#each $fileStore as file}
-    <span>{file.name}</span>
+    <span>{file.record.name}</span>
 {/each}
 ```
 
