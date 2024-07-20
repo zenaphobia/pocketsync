@@ -28,9 +28,6 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Ensure clean directory
-          git add . && git commit
-
           # Increment the version
           npm version patch -m "chore(release): bump version to %s"
           
