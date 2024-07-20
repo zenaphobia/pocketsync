@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14' # Use the Node.js version you prefer
+          node-version: '18'
 
       - name: Install dependencies
         run: npm install
@@ -27,7 +27,14 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure clean directory
+          git add . && git commit
+
+          # Increment the version
           npm version patch -m "chore(release): bump version to %s"
+          
+          # Update the remote URL to use the PAT and push the changes and tags
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push --follow-tags
 
@@ -44,7 +51,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ github.event.head_commit.id }}
           release_name: Release v${{ github.event.head_commit.id }}
