@@ -22,36 +22,66 @@ jobs:
         run: npm install
 
       - name: Increment version
+        id: version
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "Your Name"
+          git config --global user.email "your-email@example.com"
           
+          # Create a new branch for the version bump
+          BRANCH="version-bump-$(date +%s)"
+          git checkout -b $BRANCH
+          
+          # Stage all changes
+          git add -A
+          
+          # Commit the changes
+          git commit -m "chore: prepare for version bump" || echo "No changes to commit"
+
           # Increment the version
           npm version patch -m "chore(release): bump version to %s"
           
-          # Update the remote URL to use the PAT and push the changes and tags
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git push --follow-tags
+          # Push the changes to the new branch
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
+          git push origin $BRANCH
+
+          # Set the new version as an output
+          new_version=$(node -p "require('./package.json').version")
+          echo "::set-output name=new_version::$new_version"
+
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: ${{ steps.version.outputs.BRANCH }}
+          title: "Release ${{ steps.version.outputs.new_version }}"
+          body: |
+            ## Changes
+            - Bump version to ${{ steps.version.outputs.new_version }}
+          labels: release
 
       - name: Build project
+        if: github.ref == 'refs/heads/main'
         run: npm run build
 
       - name: Get the commit history
+        if: github.ref == 'refs/heads/main'
         id: commits
         run: |
           commits=$(git log --format="%h %s" -n 20)
           echo "::set-output name=commits::${commits}"
 
       - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main'
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ github.event.head_commit.id }}
-          release_name: Release v${{ github.event.head_commit.id }}
+          tag_name: v${{ steps.version.outputs.new_version }}
+          release_name: Release v${{ steps.version.outputs.new_version }}
           body: |
             ## Changes
             ${{ steps.commits.outputs.commits }}
@@ -59,6 +89,7 @@ jobs:
           prerelease: false
 
       - name: Publish to npm
+        if: github.ref == 'refs/heads/main'
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
