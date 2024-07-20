@@ -11,21 +11,24 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v2
         with:
-          node-version: "18"
+          node-version: '14' # Use the Node.js version you prefer
 
       - name: Install dependencies
         run: npm install
 
       - name: Increment version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           npm version patch -m "chore(release): bump version to %s"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git push --follow-tags
 
       - name: Build project
@@ -41,15 +44,15 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           tag_name: v${{ github.event.head_commit.id }}
           release_name: Release v${{ github.event.head_commit.id }}
           body: |
             ## Changes
             ${{ steps.commits.outputs.commits }}
-          draft: true
-          prerelease: true
+          draft: false
+          prerelease: false
 
       - name: Publish to npm
         run: npm publish
