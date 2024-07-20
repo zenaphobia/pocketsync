@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Use the Node.js version you prefer
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Increment version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch -m "chore(release): bump version to %s"
+          git push --follow-tags
+
+      - name: Build project
+        run: npm run build
+
+      - name: Get the commit history
+        id: commits
+        run: |
+          commits=$(git log --format="%h %s" -n 20)
+          echo "::set-output name=commits::${commits}"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.head_commit.id }}
+          release_name: Release v${{ github.event.head_commit.id }}
+          body: |
+            ## Changes
+            ${{ steps.commits.outputs.commits }}
+          draft: false
+          prerelease: true
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
