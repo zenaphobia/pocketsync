@@ -98,5 +98,3 @@ const updatedRecord: Partial<Dog> = {
 
 singleFile.update(updatedRecord);
 ```
-
-test release
