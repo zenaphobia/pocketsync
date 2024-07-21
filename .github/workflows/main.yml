@@ -11,15 +11,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14' # Use the Node.js version you prefer
+          node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Increment version
         env:
@@ -34,10 +34,13 @@ jobs:
           # Commit the changes
           git commit -m "chore: prepare for version bump" || echo "No changes to commit"
 
-          # Increment the version
-          npm version patch -m "chore(release): bump version to %s"
+          # Increment the version and capture the new version number
+          new_version=$(npm version patch -m "chore(release): bump version to %s" | grep -oP '(?<=v)[0-9]+\.[0-9]+\.[0-9]+')
           
-          # Update the remote URL to use the PAT and push the changes and tags
+          echo "New version is $new_version"
+          echo "new_version=$new_version" >> $GITHUB_ENV
+          
+          # Push the changes to the main branch
           git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
           git push origin HEAD:main --follow-tags
 
@@ -56,15 +59,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
-          tag_name: v${{ steps.increment_version.outputs.new_version }}
-          release_name: Release v${{ steps.increment_version.outputs.new_version }}
+          tag_name: v${{ env.new_version }}
+          release_name: Release v${{ env.new_version }}
           body: |
             ## Changes
             ${{ steps.commits.outputs.commits }}
-          draft: false
-          prerelease: false
+          draft: true
+          prerelease: true
 
       - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
