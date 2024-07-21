@@ -1,6 +1,6 @@
 {
   "name": "pocketbasesync",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Synchronize your data in real-time between your frontend and your pocketbase instances.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
